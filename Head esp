@@ -1,0 +1,47 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local function createOutline(player)
+    local character = player.Character
+    if character and character:FindFirstChild("Head") then
+        local head = character.Head
+        local outline = Instance.new("Highlight")
+        outline.Parent = head
+        outline.FillColor = Color3.fromRGB(255, 0, 0)  -- Cor do contorno
+        outline.OutlineColor = Color3.fromRGB(255, 0, 0)
+        outline.OutlineThickness = 0.2
+        outline.Enabled = true
+        
+        -- Ajustar a visibilidade do contorno baseado na posição da câmera
+        local function updateOutlineVisibility()
+            local headPosition = head.Position
+            local ray = Ray.new(Camera.CFrame.Position, (headPosition - Camera.CFrame.Position).unit * 100)
+            local hitPart, hitPosition = workspace:FindPartOnRay(ray)
+            if hitPart and hitPart:IsDescendantOf(workspace) then
+                outline.Enabled = false  -- Desligar se houver um objeto na frente
+            else
+                outline.Enabled = true  -- Ligar se não houver
+            end
+        end
+
+        -- Conectar a função de atualização à RenderStepped
+        game:GetService("RunService").RenderStepped:Connect(updateOutlineVisibility)
+    end
+end
+
+-- Monitorar todos os jogadores
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        createOutline(player)
+    end
+end
+
+-- Adicionar novos jogadores
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LocalPlayer then
+        player.CharacterAdded:Connect(function()
+            createOutline(player)
+        end)
+    end
+end)
